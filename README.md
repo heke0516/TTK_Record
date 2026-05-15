@@ -77,8 +77,8 @@ app/src/main/java/com/sanguosha/record/
 
 ```bash
 # 克隆项目
-git clone https://github.com/your-username/sanguosha-record.git
-cd sanguosha-record
+git clone https://github.com/heke0516/TTK_Record
+cd TTK_Record
 
 # 用 Android Studio 打开项目，等待 Gradle 同步完成
 # 连接手机或启动模拟器，点击 Run 即可
