@@ -51,6 +51,7 @@ data class NewGameUiState(
     val newPlayerName: String = "",
     val note: String = "",
     val isFetchingLocation: Boolean = false,
+    val errorMessage: String? = null,
     val isSaving: Boolean = false,
     val isSaved: Boolean = false
 ) {
@@ -193,8 +194,20 @@ class NewGameViewModel(application: Application) : AndroidViewModel(application)
         _uiState.update { it.copy(setupStep = (it.setupStep - 1).coerceAtLeast(1)) }
     }
 
+    fun clearError() {
+        _uiState.update { it.copy(errorMessage = null) }
+    }
+
     fun updatePlayerHero(index: Int, hero: Hero) {
         _uiState.update { state ->
+            // 检测武将是否已被其他玩家选择
+            val duplicateIndex = state.playerSlots.indexOfFirst {
+                it.hero?.id == hero.id && state.playerSlots.indexOf(it) != index
+            }
+            if (duplicateIndex >= 0) {
+                val otherPlayer = state.playerSlots[duplicateIndex].player?.name ?: "其他玩家"
+                return@update state.copy(errorMessage = "${hero.name} 已被 $otherPlayer 选择")
+            }
             val newSlots = state.playerSlots.toMutableList()
             if (index in newSlots.indices) {
                 newSlots[index] = newSlots[index].copy(hero = hero)
@@ -250,6 +263,16 @@ class NewGameViewModel(application: Application) : AndroidViewModel(application)
     /** 设置某玩家的身份 */
     fun setPlayerIdentity(index: Int, identity: Identity) {
         _uiState.update { state ->
+            // 主公身份只能选择一次
+            if (identity == Identity.LORD) {
+                val existingLordIndex = state.playerSlots.indexOfFirst {
+                    it.identity == Identity.LORD && state.playerSlots.indexOf(it) != index
+                }
+                if (existingLordIndex >= 0) {
+                    val lordPlayer = state.playerSlots[existingLordIndex].player?.name ?: "其他玩家"
+                    return@update state.copy(errorMessage = "主公身份已被 $lordPlayer 选择")
+                }
+            }
             val newSlots = state.playerSlots.toMutableList()
             if (index in newSlots.indices) {
                 newSlots[index] = newSlots[index].copy(identity = identity)

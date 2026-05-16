@@ -44,11 +44,12 @@ class StatsViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun loadStats() {
         viewModelScope.launch {
-            val players = mutableListOf<PlayerRanking>()
-
-            // Get all players and their stats
-            playerRepo.getAllPlayers().collect { playerList ->
-                players.clear()
+            // 同时观察玩家和对局数据，任一变化时重新计算统计
+            combine(
+                playerRepo.getAllPlayers(),
+                gameRepo.getTotalGamesFlow()
+            ) { players, _ -> players }.collect { playerList ->
+                val players = mutableListOf<PlayerRanking>()
                 for (player in playerList) {
                     val total = playerRepo.getPlayerTotalGames(player.id)
                     val wins = playerRepo.getPlayerWins(player.id)
